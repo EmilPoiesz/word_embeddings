@@ -6,3 +6,6 @@
 /data_train
 /data_val
 /generated
+.gitignore
+*.pdf
+*.pt
