@@ -1,8 +1,10 @@
 import torch
 from datetime import datetime
 
-def train(n_epochs, optimizer, model, loss_fn, train_loader, device):
-
+def train(n_epochs, optimizer, model, loss_fn, train_loader, device, yield_tokens=None):
+    """
+    Train model with given parameters
+    """
     n_batch = len(train_loader)
     losses_train = []
     model.train()
@@ -17,6 +19,10 @@ def train(n_epochs, optimizer, model, loss_fn, train_loader, device):
             targets = targets.to(device=device)
 
             outputs = model(contexts)
+            
+            # Mask the yield tokens
+            if yield_tokens != None:
+                outputs[:, yield_tokens] = torch.tensor(-1)
 
             loss = loss_fn(outputs, targets)
             loss.backward()
@@ -53,3 +59,25 @@ def compute_cosine_sim(model, loader, device):
 
     sim = cos_loss / n_batch
     return sim
+
+def compute_accuracy(model, loader, device):
+    """
+    Computes accuracy as correctly predicted / total 
+    """
+    model.eval()
+
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for contexts, targets in loader:
+            contexts = contexts.to(device=device)
+            targets = targets.to(device=device)
+
+            outputs = model(contexts)
+            _, predicted = torch.max(outputs, dim=1)
+            total += len(targets)
+            correct += int((predicted == targets).sum())
+
+    acc =  correct / total
+    return acc
